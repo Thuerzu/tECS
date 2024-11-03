@@ -2,8 +2,6 @@
 
 namespace tECS
 {
-	ECS* ECS::s_Instance = new ECS();
-
 	Entity ECS::CreateEntity()
 	{
 		if (DeletedEntities.empty()) return ++Next;
@@ -15,7 +13,7 @@ namespace tECS
 	void ECS::DeleteEntity(Entity& e)
 	{
 		for (auto compStorage : ComponentsData)
-			compStorage->RemoveEntity(e);
+			compStorage.second->RemoveEntity(e);
 		DeletedEntities.push_back(e);
 	}
 
@@ -26,11 +24,6 @@ namespace tECS
 	}
 
 	inline double ECS::GetDeltaTime() { return DeltaTime; }
-
-	ECS* ECS::Get()
-	{
-		return s_Instance;
-	}
 
 	void ECS::UpdateSystems(double deltaTime)
 	{

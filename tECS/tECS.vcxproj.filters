@@ -21,11 +21,14 @@
     <ClInclude Include="src\Types.h">
       <Filter>src</Filter>
     </ClInclude>
+    <ClInclude Include="src\Filter.h" />
+    <ClInclude Include="src\ComponentStorage.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\ComponentManager.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="src\Filter.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="cpp.hint" />

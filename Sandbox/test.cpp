@@ -5,69 +5,97 @@
 #include <string>
 
 #include "tECS.h"
-
-void solve(long a, long b)
-
-{
-    std::cout << "a\tb\tq\tr\tx\ty\n";
-
-    long x = 0, y = 1, lastx = 1, lasty = 0, temp;
-
-    while (b != 0)
-
-    {
-
-        std::cout << std::to_string(a) << "\t" << std::to_string(b) << "\t";
-
-        long q = a / b;
-
-        long r = a % b;
-
-        std::cout << std::to_string(q) << "\t" << std::to_string(r) << "\t";
-
-
-        a = b;
-
-        b = r;
-
-
-
-        temp = x;
-
-        x = lastx - q * x;
-
-        lastx = temp;
-
-
-
-        temp = y;
-
-        y = lasty - q * y;
-
-        lasty = temp;
-
-        std::cout << std::to_string(lastx) << "\t" << std::to_string(lasty) << "\n";
-
-
-    }
-
-    std::cout << ("Roots  x : " + std::to_string(lastx) + " y :" + std::to_string(lasty));
-
-}
+//
+//void solve(long a, long b)
+//
+//{
+//    std::cout << "a\tb\tq\tr\tx\ty\n";
+//
+//    long x = 0, y = 1, lastx = 1, lasty = 0, temp;
+//
+//    while (b != 0)
+//
+//    {
+//
+//        std::cout << std::to_string(a) << "\t" << std::to_string(b) << "\t";
+//
+//        long q = a / b;
+//
+//        long r = a % b;
+//
+//        std::cout << std::to_string(q) << "\t" << std::to_string(r) << "\t";
+//
+//
+//        a = b;
+//
+//        b = r;
+//
+//
+//
+//        temp = x;
+//
+//        x = lastx - q * x;
+//
+//        lastx = temp;
+//
+//
+//
+//        temp = y;
+//
+//        y = lasty - q * y;
+//
+//        lasty = temp;
+//
+//        std::cout << std::to_string(lastx) << "\t" << std::to_string(lasty) << "\n";
+//
+//
+//    }
+//
+//    std::cout << ("Roots  x : " + std::to_string(lastx) + " y :" + std::to_string(lasty));
+//
+//}
 
 struct PositionComponent
 {
     double x, y, z;
 };
 
+struct VelocityComponent
+{
+    double dx, dy, dz;
+};
+
+struct HealthComponent
+{
+    uint32_t value;
+};
+
+struct RandomTag {};
+
 int main()
 {
-    tECS::ECS& ecs = *tECS::ECS::Get();
+    tECS::ECS ecs;
     tECS::Entity entt = ecs.CreateEntity();
-    ecs.AddComponent(entt, PositionComponent({ 1, 1, 0 }));
-    PositionComponent* pos = ecs.GetComponent<PositionComponent>(entt);
-    std::cout << "Position: " << pos->x << " | " << pos->y << " | " << pos->z << "\n";
-    solve(3457391, 2345786);
+    tECS::Entity entt2 = ecs.CreateEntity();
+    tECS::Entity entt3 = ecs.CreateEntity();
+    ecs.Emplace<PositionComponent>(entt, 1., 1., 0.);
+    ecs.Emplace<PositionComponent>(entt2, -1., 0., 0.);
+    ecs.Emplace<PositionComponent>(entt3, 0., 0., 1.);
+    ecs.Emplace<VelocityComponent>(entt, 0.1, 0., -0.1);
+    ecs.Emplace<VelocityComponent>(entt2, 0.0, 0.5, 0.0);
+    ecs.Emplace<HealthComponent>(entt, 35u);
+    PositionComponent* pos = ecs.Get<PositionComponent>(entt);
+    //std::cout << "Position: " << pos->x << " | " << pos->y << " | " << pos->z << "\n";
+    auto filter = ecs.View<VelocityComponent, PositionComponent>();
+
+    std::cout << sizeof(RandomTag) << "\n";
+
+    for (auto e : filter)
+    {
+        pos = ecs.Get<PositionComponent>(e);
+        std::cout << "Position: " << pos->x << " | " << pos->y << " | " << pos->z << "\n";
+    }
+    //solve(3457391, 2345786);
 }
 
 // Programm ausführen: STRG+F5 oder Menüeintrag "Debuggen" > "Starten ohne Debuggen starten"

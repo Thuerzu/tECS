@@ -145,11 +145,14 @@
   <ItemGroup>
     <ClInclude Include="include\tECS.h" />
     <ClInclude Include="src\ComponentManager.h" />
+    <ClInclude Include="src\ComponentStorage.h" />
     <ClInclude Include="src\Core.h" />
+    <ClInclude Include="src\Filter.h" />
     <ClInclude Include="src\Types.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\ComponentManager.cpp" />
+    <ClCompile Include="src\Filter.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="cpp.hint" />

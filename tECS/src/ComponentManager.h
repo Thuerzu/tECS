@@ -1,8 +1,11 @@
 #pragma once
 
-#include "Types.h"
 #include "Core.h"
+#include "Types.h"
+#include "ComponentStorage.h"
+#include "Filter.h"
 #include <vector>
+#include <typeindex>
 
 namespace tECS
 {
@@ -13,15 +16,37 @@ namespace tECS
 		void DeleteEntity(Entity& e);
 
 		template <typename Component>
-		inline void AddComponent(Entity e, const Component& comp)
+		inline void Add(Entity e, const Component& comp)
 		{
-			ComponentStorage<Component>::Get().AddEntity(e, comp);
+			using StorageTypePointer = ComponentStorage<Component>*;
+			static std::type_index typeIndex = std::type_index(typeid(Component));
+			InitialiseComponentStorageIfEmpty<Component>();
+			((StorageTypePointer)ComponentsData[typeIndex])->AddEntity(e, comp);
+		}
+
+		template <typename Component, typename... Args>
+		inline void Emplace(Entity e, Args&&... args)
+		{
+			using StorageTypePointer = ComponentStorage<Component>*;
+			static std::type_index typeIndex = std::type_index(typeid(Component));
+			InitialiseComponentStorageIfEmpty<Component>();
+			((StorageTypePointer)ComponentsData[typeIndex])->EmplaceEntity(e, std::forward<Args>(args)...);
 		}
 
 		template <typename Component>
-		inline Component* GetComponent(Entity e)
+		inline Component* Get(Entity e)
 		{
-			return ComponentStorage<Component>::Get().GetComponent(e);
+			using StorageTypePointer = ComponentStorage<Component>*;
+			InitialiseComponentStorageIfEmpty<Component>();
+			return ((StorageTypePointer)ComponentsData[std::type_index(typeid(Component))])->GetComponent(e);
+		}
+
+		template <typename... FilterTypes>
+		Filter View()
+		{
+			auto filter = Filter(&ComponentsData);
+			filter.Select<FilterTypes...>();
+			return filter;
 		}
 
 		void RegisterSystem(ISystem* sys);
@@ -30,16 +55,19 @@ namespace tECS
 
 		inline double GetDeltaTime();
 
-		static ECS* Get();
-
 	private:
+		template <typename Component>
+		void InitialiseComponentStorageIfEmpty()
+		{
+			static std::type_index typeIndex = std::type_index(typeid(Component));
+			if (ComponentsData[typeIndex] == nullptr)
+				ComponentsData[typeIndex] = new ComponentStorage<Component>;
+		}
+
 		Entity Next = 0;
 		double DeltaTime;
 		std::vector<Entity> DeletedEntities = {};
-		std::vector<IBaseComponentStorage*> ComponentsData = {};
+		ComponentRegistry ComponentsData = {};
 		std::vector<ISystem*> Systems = {};
-
-	private:
-		static ECS* s_Instance;
 	};
 }
