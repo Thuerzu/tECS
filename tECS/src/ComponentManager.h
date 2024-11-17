@@ -9,51 +9,61 @@
 
 namespace tECS
 {
-	struct TECS_API ECS
+	struct ECS
 	{
-		Entity CreateEntity();
+		template <typename Component>
+		using StorageTypePointer = ComponentStorage<Component>*;
+		Entity CreateEntity()
+		{
+			if (DeletedEntities.empty())
+				return ++Next;
+			Entity temp = DeletedEntities.back();
+			DeletedEntities.pop_back();
+			return temp;
+		}
 
-		void DeleteEntity(Entity& e);
+		void DeleteEntity(Entity& e)
+		{
+			for (auto compStorage : ComponentsData)
+				compStorage.second->RemoveEntity(e);
+			DeletedEntities.push_back(e);
+		}
 
 		template <typename Component>
 		inline void Add(Entity e, const Component& comp)
 		{
-			using StorageTypePointer = ComponentStorage<Component>*;
 			static std::type_index typeIndex = std::type_index(typeid(Component));
 			InitialiseComponentStorageIfEmpty<Component>();
-			((StorageTypePointer)ComponentsData[typeIndex])->AddEntity(e, comp);
+			((StorageTypePointer<Component>)ComponentsData[typeIndex])->AddEntity(e, comp);
 		}
 
 		template <typename Component, typename... Args>
 		inline void Emplace(Entity e, Args&&... args)
 		{
-			using StorageTypePointer = ComponentStorage<Component>*;
 			static std::type_index typeIndex = std::type_index(typeid(Component));
 			InitialiseComponentStorageIfEmpty<Component>();
-			((StorageTypePointer)ComponentsData[typeIndex])->EmplaceEntity(e, std::forward<Args>(args)...);
+			((StorageTypePointer<Component>)ComponentsData[typeIndex])->EmplaceEntity(e, std::forward<Args>(args)...);
 		}
 
 		template <typename Component>
 		inline Component* Get(Entity e)
 		{
-			using StorageTypePointer = ComponentStorage<Component>*;
 			InitialiseComponentStorageIfEmpty<Component>();
-			return ((StorageTypePointer)ComponentsData[std::type_index(typeid(Component))])->GetComponent(e);
+			return ((StorageTypePointer<Component>)ComponentsData[std::type_index(typeid(Component))])->GetComponent(e);
 		}
 
-		template <typename... FilterTypes>
-		Filter View()
+
+		template <typename... IncludeTypes>
+		Selection<TypePack<IncludeTypes...>, TypePack<>>&& Where()
 		{
-			auto filter = Filter(&ComponentsData);
-			filter.Select<FilterTypes...>();
-			return filter;
+			return Selection<TypePack<IncludeTypes...>, TypePack<>>(std::array<IComponentStorageBase*, sizeof...(IncludeTypes)>{ GetComponentStorage<IncludeTypes>()... }, std::array<IComponentStorageBase*, 0>{});
 		}
 
-		void RegisterSystem(ISystem* sys);
-
-		void UpdateSystems(double deltaTime);
-
-		inline double GetDeltaTime();
+		template <typename... IncludeTypes, typename... ExcludeTypes>
+		Selection<TypePack<IncludeTypes...>, TypePack<ExcludeTypes...>>&& Where(TypePack<ExcludeTypes...>)
+		{
+			return Selection<TypePack<IncludeTypes...>, TypePack<ExcludeTypes...>>(std::array<IComponentStorageBase*, sizeof...(IncludeTypes)>{ GetComponentStorage<IncludeTypes>()... }, std::array<IComponentStorageBase*, sizeof...(ExcludeTypes)>{ GetComponentStorage<ExcludeTypes>()... });
+		}
 
 	private:
 		template <typename Component>
@@ -64,10 +74,14 @@ namespace tECS
 				ComponentsData[typeIndex] = new ComponentStorage<Component>;
 		}
 
+		template <typename Component>
+		IComponentStorageBase* GetComponentStorage()
+		{
+			return ComponentsData[std::type_index(typeid(Component))];
+		}
+
 		Entity Next = 0;
-		double DeltaTime;
 		std::vector<Entity> DeletedEntities = {};
 		ComponentRegistry ComponentsData = {};
-		std::vector<ISystem*> Systems = {};
 	};
 }

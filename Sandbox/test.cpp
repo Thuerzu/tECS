@@ -70,8 +70,6 @@ struct HealthComponent
     uint32_t value;
 };
 
-struct RandomTag {};
-
 int main()
 {
     tECS::ECS ecs;
@@ -86,15 +84,18 @@ int main()
     ecs.Emplace<HealthComponent>(entt, 35u);
     PositionComponent* pos = ecs.Get<PositionComponent>(entt);
     //std::cout << "Position: " << pos->x << " | " << pos->y << " | " << pos->z << "\n";
-    auto filter = ecs.View<VelocityComponent, PositionComponent>();
+    auto filter = ecs.Where<VelocityComponent, PositionComponent>();
 
-    std::cout << sizeof(RandomTag) << "\n";
+    double dt = 2.5;
+    
+    filter.ForEach([dt](VelocityComponent& vel, PositionComponent& pos) { pos.x += vel.dx * dt; pos.y += vel.dy * dt; pos.z += vel.dz * dt; });
 
     for (auto e : filter)
     {
         pos = ecs.Get<PositionComponent>(e);
         std::cout << "Position: " << pos->x << " | " << pos->y << " | " << pos->z << "\n";
     }
+
     //solve(3457391, 2345786);
 }
 

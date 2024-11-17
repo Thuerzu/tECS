@@ -6,7 +6,7 @@
 
 namespace tECS
 {
-	struct TECS_API IBaseComponentStorage
+	struct IComponentStorageBase
 	{
 	public:
 		virtual size_t GetIndexOfEntity(Entity e) const = 0;
@@ -14,10 +14,11 @@ namespace tECS
 		virtual void RemoveEntity(Entity e) = 0;
 		virtual size_t GetCount() const = 0;
 		virtual bool HasEntity(Entity e) const = 0;
+		virtual std::type_index GetTypeIndex() const = 0;
 	};
 
 	template <typename Component>
-	struct ComponentStorage : public IBaseComponentStorage
+	struct ComponentStorage : public IComponentStorageBase
 	{
 	public:
 
@@ -84,6 +85,11 @@ namespace tECS
 		size_t GetCount() const
 		{
 			return EntityToIndex.size();
+		}
+
+		std::type_index GetTypeIndex() const
+		{
+			return std::type_index(typeid(Component));
 		}
 
 	private:

@@ -4,24 +4,49 @@
 #include <inttypes.h>
 #include <typeindex>
 #include <unordered_map>
+#include <tuple>
 
 namespace tECS
 {
-	struct TECS_API IBaseComponentStorage;
+	struct IComponentStorageBase;
 
 	using Entity = uint64_t;			//This is used as an ID; 0 is empty, starts at 1
 
-	struct TECS_API IComponent
+	using ComponentRegistry = std::unordered_map<std::type_index, IComponentStorageBase*>;
+
+	template <typename... T>
+	struct TypePack
 	{
-		virtual ~IComponent() = default;
+		using Tuple = std::tuple<T...>;
+		constexpr size_t Size()
+		{
+			constexpr return sizeof...(T);
+		}
 	};
 
-	struct TECS_API ISystem
+	template <size_t, typename>
+	struct PackElement;
+
+	template <typename First, typename... Rest>
+	struct PackElement<0, TypePack<First, Rest...>>
 	{
-		virtual void Init() = 0;
-		virtual void Update() = 0;
-		virtual ~ISystem() = default;
+		using Type = First;
 	};
 
-	using ComponentRegistry = std::unordered_map<std::type_index, IBaseComponentStorage*>;
+	template <size_t Index, typename First, typename... Rest>
+	struct PackElement<Index, TypePack<First, Rest...>>
+	{
+		using Type = PackElement<Index - 1, Rest...>;
+	};
+
+	template <typename T>
+	struct FunctionTraits : FunctionTraits<decltype(&T::operator())> {};
+
+	template <typename R, typename T, typename... Args>
+	struct FunctionTraits<R(T::*)(Args...) const>
+	{
+		using ArgTypes = TypePack<Args...>;
+		using ReturnType = R;
+	};
+
 }
