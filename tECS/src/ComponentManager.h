@@ -45,11 +45,33 @@ namespace tECS
 		}
 
 		template <typename Component>
-		inline bool Has(Entity e)
+		inline void AddOrModify(Entity e, const Component& comp)
 		{
 			static std::type_index typeIndex = std::type_index(typeid(Component));
 			InitialiseComponentStorageIfEmpty<Component>();
-			return dynamic_cast<StorageTypePointer<Component>>(ComponentsData[typeIndex])->HasEntity(e);
+			dynamic_cast<StorageTypePointer<Component>>(ComponentsData[typeIndex])->AddOrModifyEntity(e, comp);
+		}
+
+		template <typename Component, typename... Args>
+		inline void EmplaceOrModify(Entity e, Args&&... args)
+		{
+			static std::type_index typeIndex = std::type_index(typeid(Component));
+			InitialiseComponentStorageIfEmpty<Component>();
+			dynamic_cast<StorageTypePointer<Component>>(ComponentsData[typeIndex])->EmplaceOrModifyEntity(e, std::forward<Args>(args)...);
+		}
+
+		template <typename... Component>
+		inline bool Has(Entity e)
+		{
+			(InitialiseComponentStorageIfEmpty<Component>(), ...);
+			return (dynamic_cast<StorageTypePointer<Component>>(ComponentsData[std::type_index(typeid(Component))])->HasEntity(e) && ...);
+		}
+
+		template <typename... Component>
+		inline bool HasAny(Entity e)
+		{
+			(InitialiseComponentStorageIfEmpty<Component>(), ...);
+			return (dynamic_cast<StorageTypePointer<Component>>(ComponentsData[std::type_index(typeid(Component))])->HasEntity(e) || ...);
 		}
 
 		template <typename Component>

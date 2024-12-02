@@ -200,8 +200,8 @@ namespace tECS
 	};
 
 	template <typename... IncludeTypes, typename... ExcludeTypes>
-	typename Selection<TypePack<IncludeTypes...>, TypePack<ExcludeTypes...>>::Iterator::Begin Selection<TypePack<IncludeTypes...>, TypePack<ExcludeTypes...>>::Iterator::begin;
+	typename Selection<TypePack<IncludeTypes...>, Exclude<ExcludeTypes...>>::Iterator::Begin Selection<TypePack<IncludeTypes...>, Exclude<ExcludeTypes...>>::Iterator::begin;
 
 	template <typename... IncludeTypes, typename... ExcludeTypes>
-	typename Selection<TypePack<IncludeTypes...>, TypePack<ExcludeTypes...>>::Iterator::End Selection<TypePack<IncludeTypes...>, TypePack<ExcludeTypes...>>::Iterator::end;
+	typename Selection<TypePack<IncludeTypes...>, Exclude<ExcludeTypes...>>::Iterator::End Selection<TypePack<IncludeTypes...>, Exclude<ExcludeTypes...>>::Iterator::end;
 }

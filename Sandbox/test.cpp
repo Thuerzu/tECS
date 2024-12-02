@@ -33,7 +33,7 @@ int main()
     ecs.Emplace<VelocityComponent>(entt2, 0.0, 0.5, 0.0);
     ecs.Emplace<HealthComponent>(entt, 35u);
 
-    ecs.Has<PositionComponent>(entt);
+    std::cout << ecs.HasAny<PositionComponent, VelocityComponent, HealthComponent>(entt2) << "\n";
 
     PositionComponent* pos = ecs.Get<PositionComponent>(entt);
     //std::cout << "Position: " << pos->x << " | " << pos->y << " | " << pos->z << "\n";

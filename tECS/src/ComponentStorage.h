@@ -42,6 +42,16 @@ namespace tECS
 			IndexToEntity.push_back(e);
 			EntityToIndex[e] = Storage.size() - 1;
 		}
+		void AddOrModifyEntity(Entity e, const Component& comp)
+		{
+			if (HasEntity(e))
+			{
+				Storage[EntityToIndex[e]] = comp;
+				return;
+			}
+			AddEntity(e, comp);
+		}
+
 		template <typename... Args>
 		void EmplaceEntity(Entity e, Args&&... args)
 		{
@@ -49,6 +59,18 @@ namespace tECS
 			IndexToEntity.push_back(e);
 			EntityToIndex[e] = Storage.size() - 1;
 		}
+
+		template<typename... Args>
+		void EmplaceOrModifyEntity(Entity e, Args&&... args)
+		{
+			if (HasEntity(e))
+			{
+				Storage[EntityToIndex[e]] = Component{ std::forward<Args>(args)... };
+				return;
+			}
+			EmplaceEntity(e, std::forward<Args>(args)...);
+		}
+
 		void RemoveEntity(Entity e)
 		{
 			if (Storage.empty())
