@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Core.h"
 #include "Types.h"
 #include <array>
 #include <algorithm>
@@ -158,7 +157,7 @@ namespace tECS
 			for (size_t i = 0; i < sizeof...(IncludeTypes); ++i)
 			{
 				if (std::type_index(typeid(T)) == Types[i]->GetTypeIndex())
-					return *((ComponentStorage<T>*)Types[i])->GetComponent(e);
+					return *dynamic_cast<ComponentStorage<T>*>(Types[i])->GetComponent(e);
 			}
 		}
 

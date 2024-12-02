@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Core.h"
 #include "Types.h"
 #include "ComponentStorage.h"
 #include "Filter.h"
@@ -34,7 +33,7 @@ namespace tECS
 		{
 			static std::type_index typeIndex = std::type_index(typeid(Component));
 			InitialiseComponentStorageIfEmpty<Component>();
-			((StorageTypePointer<Component>)ComponentsData[typeIndex])->AddEntity(e, comp);
+			dynamic_cast<StorageTypePointer<Component>>(ComponentsData[typeIndex])->AddEntity(e, comp);
 		}
 
 		template <typename Component, typename... Args>
@@ -42,14 +41,23 @@ namespace tECS
 		{
 			static std::type_index typeIndex = std::type_index(typeid(Component));
 			InitialiseComponentStorageIfEmpty<Component>();
-			((StorageTypePointer<Component>)ComponentsData[typeIndex])->EmplaceEntity(e, std::forward<Args>(args)...);
+			dynamic_cast<StorageTypePointer<Component>>(ComponentsData[typeIndex])->EmplaceEntity(e, std::forward<Args>(args)...);
+		}
+
+		template <typename Component>
+		inline bool Has(Entity e)
+		{
+			static std::type_index typeIndex = std::type_index(typeid(Component));
+			InitialiseComponentStorageIfEmpty<Component>();
+			return dynamic_cast<StorageTypePointer<Component>>(ComponentsData[typeIndex])->HasEntity(e);
 		}
 
 		template <typename Component>
 		inline Component* Get(Entity e)
 		{
+			static std::type_index typeIndex = std::type_index(typeid(Component));
 			InitialiseComponentStorageIfEmpty<Component>();
-			return ((StorageTypePointer<Component>)ComponentsData[std::type_index(typeid(Component))])->GetComponent(e);
+			return dynamic_cast<StorageTypePointer<Component>>(ComponentsData[typeIndex])->GetComponent(e);
 		}
 
 

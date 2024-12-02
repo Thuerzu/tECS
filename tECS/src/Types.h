@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Core.h"
 #include <inttypes.h>
 #include <typeindex>
 #include <unordered_map>
@@ -23,6 +22,9 @@ namespace tECS
 			constexpr return sizeof...(T);
 		}
 	};
+
+	template <typename... T>
+	using Exclude = TypePack<T...>;
 
 	template <size_t, typename>
 	struct PackElement;

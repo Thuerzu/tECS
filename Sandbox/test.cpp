@@ -1,59 +1,9 @@
 // tECS.cpp : Diese Datei enthält die Funktion "main". Hier beginnt und endet die Ausführung des Programms.
-//
 
 #include <iostream>
 #include <string>
 
 #include "tECS.h"
-//
-//void solve(long a, long b)
-//
-//{
-//    std::cout << "a\tb\tq\tr\tx\ty\n";
-//
-//    long x = 0, y = 1, lastx = 1, lasty = 0, temp;
-//
-//    while (b != 0)
-//
-//    {
-//
-//        std::cout << std::to_string(a) << "\t" << std::to_string(b) << "\t";
-//
-//        long q = a / b;
-//
-//        long r = a % b;
-//
-//        std::cout << std::to_string(q) << "\t" << std::to_string(r) << "\t";
-//
-//
-//        a = b;
-//
-//        b = r;
-//
-//
-//
-//        temp = x;
-//
-//        x = lastx - q * x;
-//
-//        lastx = temp;
-//
-//
-//
-//        temp = y;
-//
-//        y = lasty - q * y;
-//
-//        lasty = temp;
-//
-//        std::cout << std::to_string(lastx) << "\t" << std::to_string(lasty) << "\n";
-//
-//
-//    }
-//
-//    std::cout << ("Roots  x : " + std::to_string(lastx) + " y :" + std::to_string(lasty));
-//
-//}
 
 struct PositionComponent
 {
@@ -82,6 +32,9 @@ int main()
     ecs.Emplace<VelocityComponent>(entt, 0.1, 0., -0.1);
     ecs.Emplace<VelocityComponent>(entt2, 0.0, 0.5, 0.0);
     ecs.Emplace<HealthComponent>(entt, 35u);
+
+    ecs.Has<PositionComponent>(entt);
+
     PositionComponent* pos = ecs.Get<PositionComponent>(entt);
     //std::cout << "Position: " << pos->x << " | " << pos->y << " | " << pos->z << "\n";
     auto filter = ecs.Where<VelocityComponent, PositionComponent>();

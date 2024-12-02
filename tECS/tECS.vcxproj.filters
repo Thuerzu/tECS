@@ -15,9 +15,6 @@
     <ClInclude Include="src\ComponentManager.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="src\Core.h">
-      <Filter>src</Filter>
-    </ClInclude>
     <ClInclude Include="src\Types.h">
       <Filter>src</Filter>
     </ClInclude>
