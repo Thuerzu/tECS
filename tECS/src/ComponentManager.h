@@ -82,6 +82,16 @@ namespace tECS
 			return dynamic_cast<StorageTypePointer<Component>>(ComponentsData[typeIndex])->GetComponent(e);
 		}
 
+		template <typename Component>
+		inline Component GetOr(Entity e, Component defaultValue)
+		{
+			static std::type_index typeIndex = std::type_index(typeid(Component));
+			InitialiseComponentStorageIfEmpty<Component>();
+			if (Has<Component>(e))
+				return *dynamic_cast<StorageTypePointer<Component>>(ComponentsData[typeIndex])->GetComponent(e);
+			return defaultValue;
+		}
+
 
 		template <typename... IncludeTypes>
 		Selection<TypePack<IncludeTypes...>, TypePack<>>&& Where()
