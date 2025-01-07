@@ -36,17 +36,30 @@ int main()
     std::cout << ecs.HasAny<PositionComponent, VelocityComponent, HealthComponent>(entt2) << "\n";
 
     PositionComponent* pos = ecs.Get<PositionComponent>(entt);
+	HealthComponent* health = ecs.Get<HealthComponent>(entt);
     //std::cout << "Position: " << pos->x << " | " << pos->y << " | " << pos->z << "\n";
-    auto filter = ecs.Where<VelocityComponent, PositionComponent>();
+    auto filterMovement = ecs.Where<VelocityComponent, PositionComponent>();
 
     double dt = 2.5;
     
-    filter.ForEach([dt](VelocityComponent& vel, PositionComponent& pos) { pos.x += vel.dx * dt; pos.y += vel.dy * dt; pos.z += vel.dz * dt; });
+    filterMovement.ForEach([dt](VelocityComponent& vel, PositionComponent& pos) { pos.x += vel.dx * dt; pos.y += vel.dy * dt; pos.z += vel.dz * dt; });
 
-    for (auto e : filter)
+	std::cout << "GetOr<HealthComponent>(entt): " << ecs.GetOr<HealthComponent>(entt, HealthComponent{ 0 }).value << "\n";
+    std::cout << "GetOr<HealthComponent>(entt2): " << ecs.GetOr<HealthComponent>(entt2, HealthComponent{0}).value << "\n";
+    std::cout << "GetOrEmplace<HealthComponent>(entt3): " << ecs.GetOrEmplace<HealthComponent>(entt3, 100u)->value << "\n";
+
+    for (auto e : filterMovement)
     {
         pos = ecs.Get<PositionComponent>(e);
         std::cout << "Position: " << pos->x << " | " << pos->y << " | " << pos->z << "\n";
+    }
+
+	auto filterHealth = ecs.Where<HealthComponent>();
+
+    for (auto e : filterHealth)
+    {
+        health = ecs.Get<HealthComponent>(e);
+        std::cout << "Health of Entity [" << e << "]: " << health->value << "\n";
     }
 
     //solve(3457391, 2345786);

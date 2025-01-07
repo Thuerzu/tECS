@@ -28,6 +28,7 @@ namespace tECS
 			DeletedEntities.push_back(e);
 		}
 
+		//add the component
 		template <typename Component>
 		inline void Add(Entity e, const Component& comp)
 		{
@@ -35,7 +36,8 @@ namespace tECS
 			InitialiseComponentStorageIfEmpty<Component>();
 			dynamic_cast<StorageTypePointer<Component>>(ComponentsData[typeIndex])->AddEntity(e, comp);
 		}
-
+		
+		//emplace the component with the given arguments
 		template <typename Component, typename... Args>
 		inline void Emplace(Entity e, Args&&... args)
 		{
@@ -44,6 +46,7 @@ namespace tECS
 			dynamic_cast<StorageTypePointer<Component>>(ComponentsData[typeIndex])->EmplaceEntity(e, std::forward<Args>(args)...);
 		}
 
+		//add or modify the component
 		template <typename Component>
 		inline void AddOrModify(Entity e, const Component& comp)
 		{
@@ -52,6 +55,7 @@ namespace tECS
 			dynamic_cast<StorageTypePointer<Component>>(ComponentsData[typeIndex])->AddOrModifyEntity(e, comp);
 		}
 
+		//emplace or modify the component with the given arguments
 		template <typename Component, typename... Args>
 		inline void EmplaceOrModify(Entity e, Args&&... args)
 		{
@@ -60,6 +64,7 @@ namespace tECS
 			dynamic_cast<StorageTypePointer<Component>>(ComponentsData[typeIndex])->EmplaceOrModifyEntity(e, std::forward<Args>(args)...);
 		}
 
+		//returns true if the entity has all the components
 		template <typename... Component>
 		inline bool Has(Entity e)
 		{
@@ -67,6 +72,7 @@ namespace tECS
 			return (dynamic_cast<StorageTypePointer<Component>>(ComponentsData[std::type_index(typeid(Component))])->HasEntity(e) && ...);
 		}
 
+		//returns true if the entity has any of the components
 		template <typename... Component>
 		inline bool HasAny(Entity e)
 		{
@@ -74,6 +80,7 @@ namespace tECS
 			return (dynamic_cast<StorageTypePointer<Component>>(ComponentsData[std::type_index(typeid(Component))])->HasEntity(e) || ...);
 		}
 
+		//returns a pointer to the component, nullptr if it does not exist
 		template <typename Component>
 		inline Component* Get(Entity e)
 		{
@@ -82,6 +89,7 @@ namespace tECS
 			return dynamic_cast<StorageTypePointer<Component>>(ComponentsData[typeIndex])->GetComponent(e);
 		}
 
+		//returns a default value if the component does not exist, otherwise returns the component
 		template <typename Component>
 		inline Component GetOr(Entity e, Component defaultValue)
 		{
@@ -92,13 +100,36 @@ namespace tECS
 			return defaultValue;
 		}
 
+		//returns a pointer to the component, if it does not exist, it adds the default value
+		template <typename Component>
+		inline Component* GetOrAdd(Entity e, Component defaultValue)
+		{
+			static std::type_index typeIndex = std::type_index(typeid(Component));
+			InitialiseComponentStorageIfEmpty<Component>();
+			if (!Has<Component>(e))
+				Add(e, defaultValue);
+			return dynamic_cast<StorageTypePointer<Component>>(ComponentsData[typeIndex])->GetComponent(e);
+		}
 
+		//returns a pointer to the component, if it does not exist, it emplaces the component with the given arguments
+		template <typename Component, typename... Args>
+		inline Component* GetOrEmplace(Entity e, Args... args)
+		{
+			static std::type_index typeIndex = std::type_index(typeid(Component));
+			InitialiseComponentStorageIfEmpty<Component>();
+			if (!Has<Component>(e))
+				Emplace<Component>(e, std::forward<Args>(args)...);
+			return dynamic_cast<StorageTypePointer<Component>>(ComponentsData[typeIndex])->GetComponent(e);
+		}
+
+		//returns a selection of entities that have all the components of IncludeTypes
 		template <typename... IncludeTypes>
 		Selection<TypePack<IncludeTypes...>, TypePack<>>&& Where()
 		{
 			return Selection<TypePack<IncludeTypes...>, TypePack<>>(std::array<IComponentStorageBase*, sizeof...(IncludeTypes)>{ GetComponentStorage<IncludeTypes>()... }, std::array<IComponentStorageBase*, 0>{});
 		}
 
+		//returns a selection of entities that have all the components of IncludeTypes and none of the components of ExcludeTypes
 		template <typename... IncludeTypes, typename... ExcludeTypes>
 		Selection<TypePack<IncludeTypes...>, TypePack<ExcludeTypes...>>&& Where(TypePack<ExcludeTypes...>)
 		{
