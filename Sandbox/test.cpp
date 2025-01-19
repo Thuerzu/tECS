@@ -42,7 +42,7 @@ int main()
 
     double dt = 2.5;
     
-    filterMovement.ForEach([dt](VelocityComponent& vel, PositionComponent& pos) { pos.x += vel.dx * dt; pos.y += vel.dy * dt; pos.z += vel.dz * dt; });
+    filterMovement.ForEach([dt](tECS::Entity e, VelocityComponent& vel, PositionComponent& pos) { pos.x += vel.dx * dt; pos.y += vel.dy * dt; pos.z += vel.dz * dt; std::cout << "Calculating movement of entity [" << e << "] ...\n"; });
 
 	std::cout << "GetOr<HealthComponent>(entt): " << ecs.GetOr<HealthComponent>(entt, HealthComponent{ 0 }).value << "\n";
     std::cout << "GetOr<HealthComponent>(entt2): " << ecs.GetOr<HealthComponent>(entt2, HealthComponent{0}).value << "\n";
