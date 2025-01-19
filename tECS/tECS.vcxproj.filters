@@ -18,7 +18,7 @@
     <ClInclude Include="src\Types.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="src\Filter.h" />
+    <ClInclude Include="src\Selection.h" />
     <ClInclude Include="src\ComponentStorage.h" />
   </ItemGroup>
   <ItemGroup>
