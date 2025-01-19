@@ -13,11 +13,11 @@ namespace tECS
 	struct Selection;
 
 	template <typename... IncludeTypes, typename... ExcludeTypes>
-	struct Selection <TypePack<IncludeTypes...>, TypePack<ExcludeTypes...>>
+	struct Selection <Exists<IncludeTypes...>, Exclude<ExcludeTypes...>>
 	{	
 	public:
 
-		using IncludePack = TypePack<IncludeTypes...>;
+		using IncludePack = Exists<IncludeTypes...>;
 
 		struct Iterator
 		{
@@ -200,8 +200,8 @@ namespace tECS
 	};
 
 	template <typename... IncludeTypes, typename... ExcludeTypes>
-	typename Selection<TypePack<IncludeTypes...>, Exclude<ExcludeTypes...>>::Iterator::Begin Selection<TypePack<IncludeTypes...>, Exclude<ExcludeTypes...>>::Iterator::begin;
+	typename Selection<Exists<IncludeTypes...>, Exclude<ExcludeTypes...>>::Iterator::Begin Selection<Exists<IncludeTypes...>, Exclude<ExcludeTypes...>>::Iterator::begin;
 
 	template <typename... IncludeTypes, typename... ExcludeTypes>
-	typename Selection<TypePack<IncludeTypes...>, Exclude<ExcludeTypes...>>::Iterator::End Selection<TypePack<IncludeTypes...>, Exclude<ExcludeTypes...>>::Iterator::end;
+	typename Selection<Exists<IncludeTypes...>, Exclude<ExcludeTypes...>>::Iterator::End Selection<Exists<IncludeTypes...>, Exclude<ExcludeTypes...>>::Iterator::end;
 }

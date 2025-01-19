@@ -24,6 +24,9 @@ namespace tECS
 	};
 
 	template <typename... T>
+	using Exists = TypePack<T...>;
+
+	template <typename... T>
 	using Exclude = TypePack<T...>;
 
 	template <size_t, typename>

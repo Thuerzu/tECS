@@ -2,7 +2,7 @@
 
 #include "Types.h"
 #include "ComponentStorage.h"
-#include "Filter.h"
+#include "Selection.h"
 #include <vector>
 #include <typeindex>
 
@@ -124,16 +124,16 @@ namespace tECS
 
 		//returns a selection of entities that have all the components of IncludeTypes
 		template <typename... IncludeTypes>
-		Selection<TypePack<IncludeTypes...>, TypePack<>>&& Where()
+		Selection<Exists<IncludeTypes...>, Exclude<>>&& Where()
 		{
-			return Selection<TypePack<IncludeTypes...>, TypePack<>>(std::array<IComponentStorageBase*, sizeof...(IncludeTypes)>{ GetComponentStorage<IncludeTypes>()... }, std::array<IComponentStorageBase*, 0>{});
+			return Selection<Exists<IncludeTypes...>, Exclude<>>(std::array<IComponentStorageBase*, sizeof...(IncludeTypes)>{ GetComponentStorage<IncludeTypes>()... }, std::array<IComponentStorageBase*, 0>{});
 		}
 
 		//returns a selection of entities that have all the components of IncludeTypes and none of the components of ExcludeTypes
 		template <typename... IncludeTypes, typename... ExcludeTypes>
-		Selection<TypePack<IncludeTypes...>, TypePack<ExcludeTypes...>>&& Where(TypePack<ExcludeTypes...>)
+		Selection<Exists<IncludeTypes...>, Exclude<ExcludeTypes...>>&& Where(Exclude<ExcludeTypes...>)
 		{
-			return Selection<TypePack<IncludeTypes...>, TypePack<ExcludeTypes...>>(std::array<IComponentStorageBase*, sizeof...(IncludeTypes)>{ GetComponentStorage<IncludeTypes>()... }, std::array<IComponentStorageBase*, sizeof...(ExcludeTypes)>{ GetComponentStorage<ExcludeTypes>()... });
+			return Selection<Exists<IncludeTypes...>, Exclude<ExcludeTypes...>>(std::array<IComponentStorageBase*, sizeof...(IncludeTypes)>{ GetComponentStorage<IncludeTypes>()... }, std::array<IComponentStorageBase*, sizeof...(ExcludeTypes)>{ GetComponentStorage<ExcludeTypes>()... });
 		}
 
 	private:
