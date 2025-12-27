@@ -28,10 +28,23 @@ project "tECS"
 	}
 
 	filter "system:windows"
-		cppdialect "C++17"
+		cppdialect "C++20"
 		staticruntime "Off"
 		systemversion "latest" 
 		
+		defines {
+			"TECS_BUILD_DLL",
+		}
+
+		postbuildcommands {
+			("{COPY} %{cfg.buildtarget.relpath} ../bin/" .. outputdir .. "/Sandbox")
+		}
+
+	filter "system:linux"
+		cppdialect "gnu++20"
+		staticruntime "Off"
+		systemversion "latest" 
+
 		defines {
 			"TECS_BUILD_DLL",
 		}
@@ -82,12 +95,21 @@ project "Sandbox"
 	}
 
 	filter "system:windows"
-		cppdialect "C++17"
+		cppdialect "C++20"
 		staticruntime "off"
 		systemversion "latest"
 		
 		defines {
 			"TECS_PLATFORM_WINDOWS"
+		}
+
+	filter "system:linux"
+		cppdialect "gnu++20"
+		staticruntime "off"
+		systemversion "latest"
+
+		defines {
+			"TECS_PLATFORM_LINUX"
 		}
 
 	filter "configurations:Debug"

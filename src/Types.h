@@ -19,7 +19,7 @@ namespace tECS
 		using Tuple = std::tuple<T...>;
 		constexpr size_t Size()
 		{
-			constexpr return sizeof...(T);
+			return sizeof...(T);
 		}
 	};
 

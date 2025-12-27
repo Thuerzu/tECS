@@ -2,8 +2,9 @@
 
 #include <iostream>
 #include <string>
-
-#include "tECS.h"
+#include <chrono>
+#include <print>
+#include <tECS.h>
 
 struct PositionComponent
 {
@@ -20,12 +21,45 @@ struct HealthComponent
     uint32_t value;
 };
 
+template <size_t N>
+void test() {
+    std::cout << "================TESTING WITH " << N << " ENTITIES===============================\n";
+    auto start = std::chrono::high_resolution_clock::now();
+
+    using namespace tECS;
+    ECS ecs;
+    std::array<Entity, N> entities;
+    for (int i = 0; i < entities.size(); i++)
+        entities[i] = ecs.CreateEntity();
+    std::chrono::duration<double, std::milli> entity_creation_data_point = std::chrono::high_resolution_clock::now() - start;
+    
+    //=============COMPONENT CREATION==========
+    auto tp = std::chrono::high_resolution_clock::now();
+    for (int i = 0; i < entities.size(); i++)
+        ecs.Emplace<PositionComponent>(entities[i], i, i, i);
+    for (int i = 0; i < entities.size(); i += 2)
+        ecs.Emplace<VelocityComponent>(entities[i], -i, i, -i);
+    for (int i = 0; i < entities.size(); i += 4)
+        ecs.Emplace<HealthComponent>(entities[i], i * 2 + 100);
+    
+    //============OUTPUT=================
+    auto end = std::chrono::high_resolution_clock::now();
+    std::cout << "Entity creation: " << entity_creation_data_point.count() << "\n";
+    entity_creation_data_point = end - tp;
+    std::cout << "Component creation: " << entity_creation_data_point.count() << "\n";
+    entity_creation_data_point = end - start;
+    std::cout << "Test time: " << entity_creation_data_point.count() << "\n";
+}
+
+
 int main()
 {
+    std::println("Current logging directory: {}", LOGGING_DIRECTORY);
     tECS::ECS ecs;
     tECS::Entity entt = ecs.CreateEntity();
     tECS::Entity entt2 = ecs.CreateEntity();
     tECS::Entity entt3 = ecs.CreateEntity();
+    
     ecs.Emplace<PositionComponent>(entt, 1., 1., 0.);
     ecs.Emplace<PositionComponent>(entt2, -1., 0., 0.);
     ecs.Emplace<PositionComponent>(entt3, 0., 0., 1.);
@@ -63,7 +97,14 @@ int main()
     }
 
     //solve(3457391, 2345786);
+
+    test<100>();
+    test<1000>();
+    test<10000>();
+    test<100000>();
+    test<1000000>();
 }
+
 
 // Programm ausführen: STRG+F5 oder Menüeintrag "Debuggen" > "Starten ohne Debuggen starten"
 // Programm debuggen: F5 oder "Debuggen" > Menü "Debuggen starten"

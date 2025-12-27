@@ -1,0 +1,21 @@
+[
+  {
+    "arguments": [
+      "/usr/bin/g++",
+      "-DTECS_PLATFORM_LINUX",
+      "-D_DEBUG",
+      "-I../tECS/include",
+      "-I../tECS/src",
+      "-m64",
+      "-g",
+      "-std=gnu++20",
+      "-c",
+      "-o",
+      "../bin-int/Debug-linux-x86_64/Sandbox/test.o",
+      "test.cpp"
+    ],
+    "directory": "/mnt/daten/Dokumente/Code/C++/ECS/tECS/Sandbox",
+    "file": "/mnt/daten/Dokumente/Code/C++/ECS/tECS/Sandbox/test.cpp",
+    "output": "/mnt/daten/Dokumente/Code/C++/ECS/tECS/bin-int/Debug-linux-x86_64/Sandbox/test.o"
+  }
+]

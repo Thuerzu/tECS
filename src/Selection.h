@@ -18,6 +18,9 @@ namespace tECS
 	public:
 
 		using IncludePack = Exists<IncludeTypes...>;
+		using PointerT = std::unordered_map<Entity, uintptr_t>::iterator;
+		template <size_t N>
+		using ComponentStorageBase = std::array<IComponentStorageBase*, N>;
 
 		struct Iterator
 		{
@@ -31,22 +34,23 @@ namespace tECS
 			using RefType = ValueType&;
 
 			Iterator(std::array<IComponentStorageBase*, sizeof...(IncludeTypes)> incl, std::array<IComponentStorageBase*, sizeof...(ExcludeTypes)> excl, Begin)
-				: Index(0), Types(incl), Exclude(excl)
+				: Pointer(0), Types(incl), Exclude(excl)
 			{
-				if (!IsElementValid())
+				Pointer = Types[0]->GetEntityComponent()->begin();
+				while (!IsElementValid())
 					operator++();
 			}
 
 			Iterator(std::array<IComponentStorageBase*, sizeof...(IncludeTypes)> incl, std::array<IComponentStorageBase*, sizeof...(ExcludeTypes)> excl, End)
 				: Types(incl), Exclude(excl)
 			{
-				Index = Types[0]->GetCount();
+				Pointer = Types[0]->GetEntityComponent()->end();
 			}
 
 		private:
 			bool IsIndexValid()
 			{
-				return (Index >= 0 && Index < Types[0]->GetCount() );
+				return (Pointer != Types[0]->GetEntityComponent()->begin() && Pointer != Types[0]->GetEntityComponent()->end() );
 			}
 
 			bool Contains(Entity e)
@@ -66,7 +70,7 @@ namespace tECS
 
 			bool IsElementValid()
 			{
-				return Contains(Types[0]->GetEntityAtIndex(Index));
+				return Contains((*Pointer).first);
 			}
 
 			template <typename T, typename Tuple>
@@ -80,32 +84,25 @@ namespace tECS
 		public:
 			Iterator& operator ++()
 			{
-				do { ++Index; }
+				do { ++Pointer; }
 				while (IsIndexValid() && !IsElementValid());
 				return *this;
 			}
-
-			Iterator& operator --()
-			{
-				do { --Index; }
-				while (IsIndexValid() && !IsElementValid());
-				return *this;
-			}
-
+			
 			ValueType operator *() const
 			{
-				return Types[0]->GetEntityAtIndex(Index);
+				return (*Pointer).first;
 			}
 
 			bool operator !=(const Iterator& o) const
 			{
-				return Index != o.Index;
+				return Pointer != o.Pointer;
 			}
 
 		private:
-			size_t Index;
-			std::array<IComponentStorageBase*, sizeof...(IncludeTypes)> Types;
-			std::array<IComponentStorageBase*, sizeof...(ExcludeTypes)> Exclude;
+			PointerT Pointer;
+			ComponentStorageBase<sizeof...(IncludeTypes)> Types;
+			ComponentStorageBase<sizeof...(ExcludeTypes)> Exclude;
 		};
 
 	public:
@@ -118,8 +115,8 @@ namespace tECS
 
 		Selection(Selection&& other)
 		{
-			Types = std::move(other.Types);
-			Exclude = std::move(other.Exclude);
+			Types = other.Types;
+			Exclude = other.Exclude;
 		}
 
 		~Selection() {}
@@ -131,7 +128,7 @@ namespace tECS
 		{
 			for (auto e : *this)
 			{
-				Invoke(e, std::forward<Func>(fn), std::forward<IncludeTypes>(GetEntityComponent<IncludeTypes>(e))...);
+				Invoke(e, std::forward<Func>(fn), GetEntityComponent<IncludeTypes>(e)...);
 			}
 		}
 
@@ -164,16 +161,17 @@ namespace tECS
 		template <typename Func, typename... ArgTypes>
 		void Invoke(Entity e, Func&& fn, ArgTypes&... incl)
 		{
-			std::tuple<Entity, ArgTypes&...> args{ e, std::forward<ArgTypes>(incl)... };
+			std::tuple<Entity, ArgTypes&...> args{ e, incl... };
 			using Traits = FunctionTraits<std::remove_reference_t<Func>>;
-			using ParamPack = typename Traits::ArgTypes;
+			using ParamPack = TypePack<typename Traits::ArgTypes...>;
 			InvokeDispatch(std::forward<Func>(fn), args, ParamPack{});
 		}
 
 		template <typename Func, typename ArgsTuple, typename... NeededArgs>
 		void InvokeDispatch(Func&& fn, ArgsTuple& argsTuple, TypePack<NeededArgs...>)
 		{
-			std::invoke(std::forward<Func>(fn), GetMatchingType<NeededArgs>(argsTuple)...);
+			std::apply(std::forward<Func>(fn), argsTuple);
+			//std::invoke(std::forward<Func>(fn), GetMatchingType<NeededArgs>(argsTuple)...);
 		}
 
 		template <typename T, typename Tuple>

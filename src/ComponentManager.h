@@ -21,8 +21,10 @@ namespace tECS
 			return temp;
 		}
 
-		void DeleteEntity(Entity& e)
+		void DeleteEntity(Entity e)
 		{
+			if (std::find(DeletedEntities.begin(), DeletedEntities.end(), e) != DeletedEntities.end())
+				return;
 			for (auto compStorage : ComponentsData)
 				compStorage.second->RemoveEntity(e);
 			DeletedEntities.push_back(e);
@@ -124,7 +126,7 @@ namespace tECS
 
 		//returns a selection of entities that have all the components of IncludeTypes
 		template <typename... IncludeTypes>
-		Selection<Exists<IncludeTypes...>, Exclude<>>&& Where()
+		Selection<Exists<IncludeTypes...>, Exclude<>> Where()
 		{
 			return Selection<Exists<IncludeTypes...>, Exclude<>>(std::array<IComponentStorageBase*, sizeof...(IncludeTypes)>{ GetComponentStorage<IncludeTypes>()... }, std::array<IComponentStorageBase*, 0>{});
 		}
