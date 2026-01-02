@@ -156,14 +156,13 @@ namespace tECS
 		template <typename T>
 		std::conditional_t<std::is_same_v<T, Entity>, Entity, T&> GetEntityComponent(Entity e)
 		{
-			if constexpr (std::is_same_v<T, Entity>) {
+			if constexpr (std::is_same_v<T, Entity>)
 				return e;
-			}
-			else 
-				for (size_t i = 0; i < sizeof...(IncludeTypes); ++i) {
+			else
+				for (size_t i = 0; i < sizeof...(IncludeTypes); ++i)
 					if (std::type_index(typeid(T)) == Types[i]->GetTypeIndex())
 						return *dynamic_cast<ComponentStorage<std::remove_reference_t<T>>*>(Types[i])->GetComponent(e);
-				}
+			throw std::runtime_error("Entity does not have a component of the requested type!");
 		}
 
 		template <typename Func, typename... ArgTypes>
@@ -172,34 +171,8 @@ namespace tECS
 			std::tuple<ArgTypes...> args{ incl... };
 			using Traits = FunctionTraits<std::remove_reference_t<Func>>;
 			using ParamPack = TypePack<typename Traits::ArgTypes...>;
-			std::apply(std::forward<Func>(fn), args);//InvokeDispatch(std::forward<Func>(fn), args, ParamPack{});
+			std::apply(std::forward<Func>(fn), args);
 		}
-
-		template <typename Func, typename ArgsTuple, typename... NeededArgs>
-		void InvokeDispatch(Func&& fn, ArgsTuple& argsTuple, TypePack<NeededArgs...>)
-		{
-			using Traits = FunctionTraits<std::remove_reference_t<Func>>;
-			using FuncArgTuple = typename Traits::ArgTypes::Tuple;
-			constexpr size_t funcN = std::tuple_size_v<FuncArgTuple>;
-			constexpr size_t total = std::tuple_size_v<std::remove_reference_t<ArgsTuple>>;
-
-			if constexpr (funcN == total)
-			{
-				std::apply(std::forward<Func>(fn), argsTuple);
-			}
-			else
-			{
-				// assume first element of argsTuple is Entity — forward the rest
-				auto tuple_skip_first = [&]<size_t... I>(std::index_sequence<I...>)
-				{
-					return std::make_tuple(std::get<I + 1>(argsTuple)...);
-				};
-
-				auto sub = tuple_skip_first(std::make_index_sequence<(total > 0 ? total - 1 : 0)>{});
-				std::apply(std::forward<Func>(fn), sub);
-			}
-		}
-
 
 	public:
 		Iterator begin()

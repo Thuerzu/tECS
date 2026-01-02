@@ -39,13 +39,13 @@ void test() {
     auto tp = std::chrono::high_resolution_clock::now();
     THLIB_SET_MARKER("EMPLACING POSITIONS");
     for (int i = 0; i < entities.size(); i++)
-        ecs.Emplace<PositionComponent>(entities[i], i, i, i);
+        ecs.Emplace<PositionComponent>(entities[i], (double)i, (double)i, (double)i);
     THLIB_SET_MARKER("EMPLACING VELOCITIES");
     for (int i = 0; i < entities.size(); i += 2)
-        ecs.Emplace<VelocityComponent>(entities[i], -i, i, -i);
+        ecs.Emplace<VelocityComponent>(entities[i], -(double)i, (double)i, -(double)i);
     THLIB_SET_MARKER("EMPLACING HEALTH DATA");
     for (int i = 0; i < entities.size(); i += 4)
-        ecs.Emplace<HealthComponent>(entities[i], i * 2 + 100);
+        ecs.Emplace<HealthComponent>(entities[i], (uint32_t)i * 2 + 100);
     
     THLIB_SET_MARKER("<Position> SELECTION");
     ecs.Where<PositionComponent>().ForEach([](PositionComponent& pos) {
