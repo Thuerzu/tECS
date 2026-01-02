@@ -11,6 +11,8 @@
 #include <vector>
 #include <variant>
 
+#include <Macros.hpp>
+
 namespace tECS
 {
 	struct IComponentStorageBase
@@ -175,6 +177,7 @@ namespace tECS
 				}
 			}
 			//No space found, create new block
+			THLIB_SET_MARKER("NEW BLOCK");
 			auto newBlock = std::make_unique<ComponentBlock<Component>>();
 			auto comp = newBlock->Emplace(e, std::forward<Args>(args)...);
 			Storage.push_back(std::move(newBlock));

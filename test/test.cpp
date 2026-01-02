@@ -5,6 +5,8 @@
 #include <chrono>
 #include <print>
 #include <tECS.h>
+#include <tuple>
+#include <Profiler.hpp>
 
 struct PositionComponent
 {
@@ -35,13 +37,26 @@ void test() {
     
     //=============COMPONENT CREATION==========
     auto tp = std::chrono::high_resolution_clock::now();
+    THLIB_SET_MARKER("EMPLACING POSITIONS");
     for (int i = 0; i < entities.size(); i++)
         ecs.Emplace<PositionComponent>(entities[i], i, i, i);
+    THLIB_SET_MARKER("EMPLACING VELOCITIES");
     for (int i = 0; i < entities.size(); i += 2)
         ecs.Emplace<VelocityComponent>(entities[i], -i, i, -i);
+    THLIB_SET_MARKER("EMPLACING HEALTH DATA");
     for (int i = 0; i < entities.size(); i += 4)
         ecs.Emplace<HealthComponent>(entities[i], i * 2 + 100);
     
+    THLIB_SET_MARKER("<Position> SELECTION");
+    ecs.Where<PositionComponent>().ForEach([](PositionComponent& pos) {
+        pos.x += 2;
+    });
+
+    // THLIB_SET_MARKER("<Position, Velocity>\\<Health> SELECTION");
+    // for (auto tup : ecs.Where<PositionComponent, VelocityComponent>(Exclude<HealthComponent>{})) {
+    //     pos.x += vel.dx; pos.y += vel.dy; pos.z += vel.dz;
+    //     vel.dx -= 1;
+    // };
     //============OUTPUT=================
     auto end = std::chrono::high_resolution_clock::now();
     std::cout << "Entity creation: " << entity_creation_data_point.count() << "\n";
@@ -55,6 +70,11 @@ void test() {
 int main()
 {
     std::println("Current logging directory: {}", LOGGING_DIRECTORY);
+
+    tECS::Tuple<int, double, std::string> testTuple{ 42, 3.14, "Hello tECS!"};
+    
+    //int i = testTuple.get<5>();
+
     tECS::ECS ecs;
     tECS::Entity entt = ecs.CreateEntity();
     tECS::Entity entt2 = ecs.CreateEntity();
@@ -76,11 +96,7 @@ int main()
 
     double dt = 2.5;
     
-    filterMovement.ForEach([dt](tECS::Entity e, VelocityComponent& vel, PositionComponent& pos) { pos.x += vel.dx * dt; pos.y += vel.dy * dt; pos.z += vel.dz * dt; std::cout << "Calculating movement of entity [" << e << "] ...\n"; });
-
-	std::cout << "GetOr<HealthComponent>(entt): " << ecs.GetOr<HealthComponent>(entt, HealthComponent{ 0 }).value << "\n";
-    std::cout << "GetOr<HealthComponent>(entt2): " << ecs.GetOr<HealthComponent>(entt2, HealthComponent{0}).value << "\n";
-    std::cout << "GetOrEmplace<HealthComponent>(entt3): " << ecs.GetOrEmplace<HealthComponent>(entt3, 100u)->value << "\n";
+    filterMovement.ForEach([dt](VelocityComponent& vel, tECS::Entity e, PositionComponent& pos) { pos.x += vel.dx * dt; pos.y += vel.dy * dt; pos.z += vel.dz * dt; std::cout << "Calculating movement of entity [" << e << "] ...\n"; });
 
     for (auto e : filterMovement)
     {
@@ -97,12 +113,13 @@ int main()
     }
 
     //solve(3457391, 2345786);
-
+    tBenchmark::Profiler::get().new_profile("TestEntities", std::string(LOGGING_DIRECTORY) + "/ECS.json");
     test<100>();
     test<1000>();
     test<10000>();
-    test<100000>();
-    test<1000000>();
+    tBenchmark::Profiler::get().end_profile();
+    //test<100000>();
+    //test<1000000>();
 }
 
 

@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.20)
 
 add_executable(Benchmark test.cpp)
 
-target_link_libraries(Benchmark PRIVATE tECS)
+target_link_libraries(Benchmark PRIVATE tECS PUBLIC tBenchmark)
 
 set_target_properties(Benchmark
     PROPERTIES

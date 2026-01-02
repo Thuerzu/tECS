@@ -6,6 +6,8 @@
 #include <vector>
 #include <typeindex>
 
+#include <Macros.hpp>
+
 namespace tECS
 {
 	struct ECS
@@ -14,6 +16,7 @@ namespace tECS
 		using StorageTypePointer = ComponentStorage<Component>*;
 		Entity CreateEntity()
 		{
+			THLIB_BENCHMARK_FUNCTION;
 			if (DeletedEntities.empty())
 				return ++Next;
 			Entity temp = DeletedEntities.back();
@@ -43,6 +46,7 @@ namespace tECS
 		template <typename Component, typename... Args>
 		inline void Emplace(Entity e, Args&&... args)
 		{
+			THLIB_BENCHMARK_FUNCTION;
 			static std::type_index typeIndex = std::type_index(typeid(Component));
 			InitialiseComponentStorageIfEmpty<Component>();
 			dynamic_cast<StorageTypePointer<Component>>(ComponentsData[typeIndex])->EmplaceEntity(e, std::forward<Args>(args)...);
@@ -93,7 +97,7 @@ namespace tECS
 
 		//returns a default value if the component does not exist, otherwise returns the component
 		template <typename Component>
-		inline Component GetOr(Entity e, Component defaultValue)
+		inline Component GetOr(Entity e, Component&& defaultValue)
 		{
 			static std::type_index typeIndex = std::type_index(typeid(Component));
 			InitialiseComponentStorageIfEmpty<Component>();
@@ -104,7 +108,7 @@ namespace tECS
 
 		//returns a pointer to the component, if it does not exist, it adds the default value
 		template <typename Component>
-		inline Component* GetOrAdd(Entity e, Component defaultValue)
+		inline Component* GetOrAdd(Entity e, Component& defaultValue)
 		{
 			static std::type_index typeIndex = std::type_index(typeid(Component));
 			InitialiseComponentStorageIfEmpty<Component>();
@@ -128,13 +132,15 @@ namespace tECS
 		template <typename... IncludeTypes>
 		Selection<Exists<IncludeTypes...>, Exclude<>> Where()
 		{
+			THLIB_BENCHMARK_FUNCTION;
 			return Selection<Exists<IncludeTypes...>, Exclude<>>(std::array<IComponentStorageBase*, sizeof...(IncludeTypes)>{ GetComponentStorage<IncludeTypes>()... }, std::array<IComponentStorageBase*, 0>{});
 		}
 
 		//returns a selection of entities that have all the components of IncludeTypes and none of the components of ExcludeTypes
 		template <typename... IncludeTypes, typename... ExcludeTypes>
-		Selection<Exists<IncludeTypes...>, Exclude<ExcludeTypes...>>&& Where(Exclude<ExcludeTypes...>)
+		Selection<Exists<IncludeTypes...>, Exclude<ExcludeTypes...>> Where(Exclude<ExcludeTypes...>)
 		{
+			THLIB_BENCHMARK_FUNCTION;
 			return Selection<Exists<IncludeTypes...>, Exclude<ExcludeTypes...>>(std::array<IComponentStorageBase*, sizeof...(IncludeTypes)>{ GetComponentStorage<IncludeTypes>()... }, std::array<IComponentStorageBase*, sizeof...(ExcludeTypes)>{ GetComponentStorage<ExcludeTypes>()... });
 		}
 

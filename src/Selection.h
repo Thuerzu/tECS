@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <functional>
 #include <tuple>
+#include <utility>
 
 
 namespace tECS
@@ -122,15 +123,19 @@ namespace tECS
 		~Selection() {}
 		
 	public:
-
-		template <typename Func>
-		void ForEach(Func&& fn)
-		{
-			for (auto e : *this)
+		template <typename Func, typename... Args>
+		inline void ForEach(Func&& fn, TypePack<Args...> = {}) {
+			if constexpr (sizeof...(Args) == 0)
 			{
-				Invoke(e, std::forward<Func>(fn), GetEntityComponent<IncludeTypes>(e)...);
+				using Traits = FunctionTraits<std::remove_reference_t<Func>>;
+				ForEach(std::forward<Func>(fn), typename Traits::ArgTypes{});
+			} else {
+				THLIB_BENCHMARK_FUNCTION;
+				for (auto e : *this)
+					Invoke(fn, GetEntityComponent<Args>(e)...);
 			}
 		}
+
 
 		bool Contains(Entity e)
 		{
@@ -149,35 +154,50 @@ namespace tECS
 
 	private:
 		template <typename T>
-		T& GetEntityComponent(Entity e)
+		std::conditional_t<std::is_same_v<T, Entity>, Entity, T&> GetEntityComponent(Entity e)
 		{
-			for (size_t i = 0; i < sizeof...(IncludeTypes); ++i)
-			{
-				if (std::type_index(typeid(T)) == Types[i]->GetTypeIndex())
-					return *dynamic_cast<ComponentStorage<T>*>(Types[i])->GetComponent(e);
+			if constexpr (std::is_same_v<T, Entity>) {
+				return e;
 			}
+			else 
+				for (size_t i = 0; i < sizeof...(IncludeTypes); ++i) {
+					if (std::type_index(typeid(T)) == Types[i]->GetTypeIndex())
+						return *dynamic_cast<ComponentStorage<std::remove_reference_t<T>>*>(Types[i])->GetComponent(e);
+				}
 		}
 
 		template <typename Func, typename... ArgTypes>
-		void Invoke(Entity e, Func&& fn, ArgTypes&... incl)
+		void Invoke(Func&& fn, ArgTypes... incl)
 		{
-			std::tuple<Entity, ArgTypes&...> args{ e, incl... };
+			std::tuple<ArgTypes...> args{ incl... };
 			using Traits = FunctionTraits<std::remove_reference_t<Func>>;
 			using ParamPack = TypePack<typename Traits::ArgTypes...>;
-			InvokeDispatch(std::forward<Func>(fn), args, ParamPack{});
+			std::apply(std::forward<Func>(fn), args);//InvokeDispatch(std::forward<Func>(fn), args, ParamPack{});
 		}
 
 		template <typename Func, typename ArgsTuple, typename... NeededArgs>
 		void InvokeDispatch(Func&& fn, ArgsTuple& argsTuple, TypePack<NeededArgs...>)
 		{
-			std::apply(std::forward<Func>(fn), argsTuple);
-			//std::invoke(std::forward<Func>(fn), GetMatchingType<NeededArgs>(argsTuple)...);
-		}
+			using Traits = FunctionTraits<std::remove_reference_t<Func>>;
+			using FuncArgTuple = typename Traits::ArgTypes::Tuple;
+			constexpr size_t funcN = std::tuple_size_v<FuncArgTuple>;
+			constexpr size_t total = std::tuple_size_v<std::remove_reference_t<ArgsTuple>>;
 
-		template <typename T, typename Tuple>
-		T& GetMatchingType(Tuple&& tuple)
-		{
-			return std::get<T>(std::forward<Tuple>(tuple));
+			if constexpr (funcN == total)
+			{
+				std::apply(std::forward<Func>(fn), argsTuple);
+			}
+			else
+			{
+				// assume first element of argsTuple is Entity — forward the rest
+				auto tuple_skip_first = [&]<size_t... I>(std::index_sequence<I...>)
+				{
+					return std::make_tuple(std::get<I + 1>(argsTuple)...);
+				};
+
+				auto sub = tuple_skip_first(std::make_index_sequence<(total > 0 ? total - 1 : 0)>{});
+				std::apply(std::forward<Func>(fn), sub);
+			}
 		}
 
 
