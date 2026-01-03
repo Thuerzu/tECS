@@ -18,12 +18,12 @@ namespace tECS
 	struct IComponentStorageBase
 	{
 	public:
-		virtual Entity GetEntityOfComponent(uintptr_t ptr) const = 0;
-		virtual void RemoveEntity(Entity e) = 0;
-		virtual size_t GetCount() const = 0;
-		virtual bool HasEntity(Entity e) const = 0;
-		virtual std::unordered_map<Entity, uintptr_t>* GetEntityComponent() = 0;
-		virtual std::type_index GetTypeIndex() const = 0;
+		virtual Entity get_entity_of_component(uintptr_t ptr) const = 0;
+		virtual void remove_entity(Entity e) = 0;
+		virtual size_t get_count() const = 0;
+		virtual bool has_entity(Entity e) const = 0;
+		virtual std::unordered_map<Entity, uintptr_t>* get_entity_component() = 0;
+		virtual std::type_index get_type_index() const = 0;
 	};
 
 	template <typename Component>
@@ -32,92 +32,92 @@ namespace tECS
 	public:
 		ComponentBlock() = default;
 		
-		uintptr_t Add(Entity e, const Component& comp)
+		uintptr_t add(Entity e, const Component& comp)
 		{
-			if (Full())
+			if (full())
 				return 0;
-			size_t index = Tombstones.CountrOne();
-			Storage[index] = comp;
-			Tombstones.Set(index);
-			Entities[index] = e;
-			return reinterpret_cast<uintptr_t>(&Storage[index]);
+			size_t index = tombstones.CountrOne();
+			storage[index] = comp;
+			tombstones.Set(index);
+			entities[index] = e;
+			return reinterpret_cast<uintptr_t>(&storage[index]);
 		}
 
 		template <typename... Args>
-		uintptr_t Emplace(Entity e, Args&&... args)
+		uintptr_t emplace(Entity e, Args&&... args)
 		{
-			if (Full())
+			if (full())
 				return 0;
-			size_t index = Tombstones.CountrOne();
-			Storage[index] = Component{ std::forward<Args>(args)... };
-			Tombstones.Set(index);
-			Entities[index] = e;
-			return reinterpret_cast<uintptr_t>(&Storage[index]);
+			size_t index = tombstones.CountrOne();
+			storage[index] = Component{ std::forward<Args>(args)... };
+			tombstones.Set(index);
+			entities[index] = e;
+			return reinterpret_cast<uintptr_t>(&storage[index]);
 		}
 
-		Component* Get(Entity e)
+		Component* get(Entity e)
 		{
-			for (size_t i = 0; i < Storage.size(); i++)
+			for (size_t i = 0; i < storage.size(); i++)
 			{
-				if (Tombstones.Test(i) && Entities[i] == e)
-					return &Storage[i];
+				if (tombstones.Test(i) && entities[i] == e)
+					return &storage[i];
 			}
 			return nullptr;
 		}
 
-		bool Remove(Entity e)
+		bool remove(Entity e)
 		{
-			for (size_t i = 0; i < Storage.size(); i++)
+			for (size_t i = 0; i < storage.size(); i++)
 			{
-				if (Tombstones.Test(i) && Entities[i] == e)
+				if (tombstones.Test(i) && entities[i] == e)
 				{
-					Tombstones.Reset(i);
+					tombstones.Reset(i);
 					return true;
 				}
 			}
 			return false;
 		}
 
-		bool RemoveAt(uintptr_t ptr)
+		bool remove_at(uintptr_t ptr)
 		{
-			uintptr_t base = reinterpret_cast<uintptr_t>(&Storage[0]);
+			uintptr_t base = reinterpret_cast<uintptr_t>(&storage[0]);
 
-			if (ptr < base || ptr >= base + sizeof(Component) * Storage.size())
+			if (ptr < base || ptr >= base + sizeof(Component) * storage.size())
 				return false;
 
 			size_t index = (ptr - base) / sizeof(Component);
-			Tombstones.Reset(index);
+			tombstones.Reset(index);
 			return true;
 		}
 
-		Entity GetEntityOfComponent(uintptr_t ptr)
+		Entity get_entity_of_component(uintptr_t ptr)
 		{
-			uintptr_t base = reinterpret_cast<uintptr_t>(&Storage[0]);
+			uintptr_t base = reinterpret_cast<uintptr_t>(&storage[0]);
 
-			if (ptr < base || ptr >= base + sizeof(Component) * Storage.size())
+			if (ptr < base || ptr >= base + sizeof(Component) * storage.size())
 				return 0;
 
 			size_t index = (ptr - base) / sizeof(Component);
 
-			if (Tombstones.Test(index))
-				return Entities[index];
+			if (tombstones.Test(index))
+				return entities[index];
 			return 0;
 		}
 
-		bool Full() const
+		bool full() const
 		{
-			return Tombstones.All();
+			return tombstones.All();
 		}
 
-		bool Empty() const
+		bool empty() const
 		{
-			return Tombstones.None();
+			return tombstones.None();
 		}
 
 	public:
-		std::array<Component, 1024> Storage;
-		std::array<Entity, 1024> Entities;
-		Bitset<1024> Tombstones;
+		std::array<Component, 1024> storage;
+		std::array<Entity, 1024> entities;
+		Bitset<1024> tombstones;
 	};
 
 	template <typename Component>
@@ -126,121 +126,121 @@ namespace tECS
 	public:
 
 		ComponentStorage() = default;
-		bool HasEntity(Entity e) const
+		bool has_entity(Entity e) const
 		{
-			return (EntityComponent.find(e) != EntityComponent.end());
+			return (entity_component.find(e) != entity_component.end());
 		}
-		Entity GetEntityOfComponent(uintptr_t comp) const
+		Entity get_entity_of_component(uintptr_t comp) const
 		{
-			for (const auto& pair : EntityComponent)
+			for (const auto& pair : entity_component)
 			{
 				if (reinterpret_cast<uintptr_t>(pair.second) == comp)
 					return pair.first;
 			}
 			return 0;
 		}
-		void AddEntity(Entity e, const Component& comp)
+		void add_entity(Entity e, const Component& comp)
 		{
-			for (auto& block : Storage)
+			for (auto& block : storage)
 			{
 				if (auto compPtr = block->Add(e, comp))
 				{
-					EntityComponent[e] = compPtr;
+					entity_component[e] = compPtr;
 					return;
 				}
 			}
 			//No space found, create new block
-			auto newBlock = std::make_unique<ComponentBlock<Component>>();
-			auto compPtr = newBlock->Add(e, comp);
-			Storage.push_back(std::move(newBlock));
-			EntityComponent[e] = compPtr;
+			auto new_block = std::make_unique<ComponentBlock<Component>>();
+			auto comp_ptr = new_block->Add(e, comp);
+			storage.push_back(std::move(new_block));
+			entity_component[e] = comp_ptr;
 		}
-		void AddOrModifyEntity(Entity e, const Component& comp)
+		void add_or_modify_entity(Entity e, const Component& comp)
 		{
-			if (HasEntity(e))
+			if (has_entity(e))
 			{
-				*reinterpret_cast<Component*>(EntityComponent[e]) = comp;
+				*reinterpret_cast<Component*>(entity_component[e]) = comp;
 				return;
 			}
-			AddEntity(e, comp);
+			add_entity(e, comp);
 		}
 
 		template <typename... Args>
-		void EmplaceEntity(Entity e, Args&&... args)
+		void emplace_entity(Entity e, Args&&... args)
 		{
-			for (auto& block : Storage)
+			for (auto& block : storage)
 			{
-				if (auto compPtr = block->Emplace(e, std::forward<Args>(args)...))
+				if (auto compPtr = block->emplace(e, std::forward<Args>(args)...))
 				{
-					EntityComponent[e] = compPtr;
+					entity_component[e] = compPtr;
 					return;
 				}
 			}
 			//No space found, create new block
 			THLIB_SET_MARKER("NEW BLOCK");
 			auto newBlock = std::make_unique<ComponentBlock<Component>>();
-			auto comp = newBlock->Emplace(e, std::forward<Args>(args)...);
-			Storage.push_back(std::move(newBlock));
-			EntityComponent[e] = comp;
+			auto comp = newBlock->emplace(e, std::forward<Args>(args)...);
+			storage.push_back(std::move(newBlock));
+			entity_component[e] = comp;
 		}
 
 		template<typename... Args>
-		void EmplaceOrModifyEntity(Entity e, Args&&... args)
+		void emplace_or_modify_entity(Entity e, Args&&... args)
 		{
-			if (HasEntity(e))
+			if (has_entity(e))
 			{
-				*reinterpret_cast<Component*>(EntityComponent[e]) = Component{ std::forward<Args>(args)... };
+				*reinterpret_cast<Component*>(entity_component[e]) = Component{ std::forward<Args>(args)... };
 				return;
 			}
-			EmplaceEntity(e, std::forward<Args>(args)...);
+			emplace_entity(e, std::forward<Args>(args)...);
 		}
 
-		void RemoveEntity(Entity e)
+		void remove_entity(Entity e)
 		{
-			if (Storage.empty())
+			if (storage.empty())
 				return;
 
-			auto i = EntityComponent.find(e);
-			if (i != EntityComponent.end())
+			auto i = entity_component.find(e);
+			if (i != entity_component.end())
 			{
-				for (auto blockIt = Storage.begin(); blockIt < Storage.end(); blockIt++)
-					if ((*blockIt)->RemoveAt(i->second))
+				for (auto blockIt = storage.begin(); blockIt < storage.end(); blockIt++)
+					if ((*blockIt)->remove_at(i->second))
 					{
-						if ((*blockIt)->Empty())
-							blockIt = Storage.erase(blockIt);
+						if ((*blockIt)->empty())
+							blockIt = storage.erase(blockIt);
 						break;
 					}
 
-				EntityComponent.erase(e);
+				entity_component.erase(e);
 			}
 		}
-		Component* GetComponent(Entity e)
+		Component* get_component(Entity e)
 		{
-			return (EntityComponent.find(e) != EntityComponent.end()) ? reinterpret_cast<Component*>(EntityComponent[e]) : nullptr;
+			return (entity_component.find(e) != entity_component.end()) ? reinterpret_cast<Component*>(entity_component[e]) : nullptr;
 		}
 
-		std::vector<ComponentBlock<Component>*>* GetStorage()
+		std::vector<ComponentBlock<Component>*>* get_storage()
 		{
-			return &Storage;
+			return &storage;
 		}
 
-		size_t GetCount() const
+		size_t get_count() const
 		{
-			return EntityComponent.size();
+			return entity_component.size();
 		}
 
-		std::unordered_map<Entity, uintptr_t>* GetEntityComponent()
+		std::unordered_map<Entity, uintptr_t>* get_entity_component()
 		{
-			return &EntityComponent;
+			return &entity_component;
 		}
 
-		std::type_index GetTypeIndex() const
+		std::type_index get_type_index() const
 		{
 			return std::type_index(typeid(Component));
 		}
 
 	private:
-		std::vector<std::unique_ptr<ComponentBlock<Component>>> Storage = {};
-		std::unordered_map<Entity, uintptr_t> EntityComponent = {};
+		std::vector<std::unique_ptr<ComponentBlock<Component>>> storage = {};
+		std::unordered_map<Entity, uintptr_t> entity_component = {};
 	};
 }

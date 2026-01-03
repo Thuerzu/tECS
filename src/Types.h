@@ -14,22 +14,6 @@ namespace tECS
 
 	using ComponentRegistry = std::unordered_map<std::type_index, IComponentStorageBase*>;
 
-	template <typename... T>
-	struct TypePack
-	{
-		using Tuple = std::tuple<T...>;
-		constexpr size_t Size()
-		{
-			return sizeof...(T);
-		}
-	};
-
-	template <typename... T>
-	using Exists = TypePack<T...>;
-
-	template <typename... T>
-	using Exclude = TypePack<T...>;
-
 	template <size_t Idx, typename... T>
 	struct PackElement;
 
@@ -48,6 +32,27 @@ namespace tECS
 		static_assert(false, "PackElement index out of bounds");
 		using Type = void;
 	}; // to trigger static_assert on out-of-bounds
+
+	template <typename... T>
+	struct TypePack
+	{
+		using Tuple = std::tuple<T...>;
+		template <size_t N>
+		using At = typename PackElement<N, T...>::Type;
+		template <typename U>
+		static constexpr bool Contains() {
+			return (std::is_same_v<U, T> || ...);
+		}
+		constexpr size_t Size() const {
+			return sizeof...(T);
+		}
+	};
+
+	template <typename... T>
+	using Exists = TypePack<T...>;
+
+	template <typename... T>
+	using Exclude = TypePack<T...>;
 
 	template <size_t Idx, typename... T>
 	struct PackElement<Idx, TypePack<T...>> {
