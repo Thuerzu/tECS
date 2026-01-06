@@ -1,5 +1,3 @@
-// tECS.cpp : Diese Datei enthält die Funktion "main". Hier beginnt und endet die Ausführung des Programms.
-
 #include <iostream>
 #include <string>
 #include <chrono>
@@ -7,6 +5,7 @@
 #include <tECS.h>
 #include <tuple>
 #include <Profiler.hpp>
+#include <concepts>
 
 struct PositionComponent {
     double x, y, z;
@@ -22,10 +21,10 @@ struct HealthComponent {
 
 template <size_t N>
 void test() {
+    using namespace tECS;
+
     std::cout << "================TESTING WITH " << N << " ENTITIES===============================\n";
     auto start = std::chrono::high_resolution_clock::now();
-
-    using namespace tECS;
     ECS ecs;
     std::array<Entity, N> entities;
     for (int i = 0; i < entities.size(); i++)
@@ -44,17 +43,19 @@ void test() {
     for (int i = 0; i < entities.size(); i += 4)
         ecs.emplace<HealthComponent>(entities[i], (uint32_t)i * 2 + 100);
     
-    THLIB_SET_MARKER("<Position> SELECTION");
-    ecs.where<PositionComponent>().for_each([](PositionComponent& pos) {
-        pos.x += 2;
-    });
+    {
+        THLIB_BENCHMARK_SCOPE("FOR_EACH OVER <Position>");
+        ecs.where<PositionComponent>().for_each([](Entity e, PositionComponent& pos) {
+            pos.x += e; pos.y += e; pos.z += e;
+        });
+    }
 
-    THLIB_SET_MARKER("<Position, Velocity>\\<Health> SELECTION");
-    auto movementSelection = ecs.where<PositionComponent, VelocityComponent>(Exclude<HealthComponent>{});
-    for (auto[e, pos, vel] : movementSelection) {
-        pos.x += vel.dx; pos.y += vel.dy; pos.z += vel.dz;
-        vel.dx -= 1;
-    };
+    {
+        THLIB_BENCHMARK_SCOPE("RANGE BASED FOR LOOP OVER <Position>");
+        for (auto[e, pos] : ecs.where<PositionComponent>()) {
+            pos.x -= e; pos.y -= e; pos.z -= e;
+        }
+    }
 
     //============OUTPUT=================
     auto end = std::chrono::high_resolution_clock::now();
@@ -65,10 +66,9 @@ void test() {
     std::cout << "Test time: " << entity_creation_data_point.count() << "\n";
 }
 
-
 int main() {
     std::println("Current logging directory: {}", LOGGING_DIRECTORY);
-
+    
     tECS::ECS ecs;
     tECS::Entity entt = ecs.create_entity();
     tECS::Entity entt2 = ecs.create_entity();
@@ -90,17 +90,15 @@ int main() {
 
     double dt = 2.5;
     
-    filterMovement.for_each([dt](VelocityComponent& vel, tECS::Entity e, PositionComponent& pos) { pos.x += vel.dx * dt; pos.y += vel.dy * dt; pos.z += vel.dz * dt; std::cout << "Calculating movement of entity [" << e << "] ...\n"; });
+    ecs.where<VelocityComponent, PositionComponent>().for_each([dt](VelocityComponent& vel, PositionComponent& pos) {
+        pos.x += vel.dx * dt; pos.y += vel.dy * dt; pos.z += vel.dz * dt;
+    });
 
-    for (auto[e, vel, pos] : filterMovement) {
+    for (auto[e, vel, pos] : ecs.where<VelocityComponent, PositionComponent>())
         std::cout << "Position: " << pos.x << " | " << pos.y << " | " << pos.z << "\n";
-    }
 
-	auto filterHealth = ecs.where<HealthComponent>();
-
-    for (auto[e, health] : filterHealth) {
-        std::cout << "Health of Entity [" << e << "]: " << health.value << "\n";
-    }
+    for (auto[e, health] : ecs.where<HealthComponent>())
+        std::println("Health of Entity [{}]: {}", e, health.value);
 
     tBenchmark::Profiler::get().new_profile("TestEntities", std::string(LOGGING_DIRECTORY) + "/ECS.json");
     test<100>();
@@ -108,3 +106,11 @@ int main() {
     test<10000>();
     tBenchmark::Profiler::get().end_profile();
 }
+
+/*
+
+for (auto[e, health] : ecs.where<HealthComponent>()) {
+    std::println("Health of Entity [{}]: {}", e, health.value);
+}
+
+*/

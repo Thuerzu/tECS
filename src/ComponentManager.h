@@ -56,6 +56,7 @@ namespace tECS
 		template <typename Component>
 		inline void add_or_modify(Entity e, const Component& comp)
 		{
+			THLIB_BENCHMARK_FUNCTION;
 			static std::type_index type_idx = std::type_index(typeid(Component));
 			initialise_component_storage_if_empty<Component>();
 			dynamic_cast<StorageTypePointer<Component>>(components_data[type_idx])->add_or_modify_entity(e, comp);
@@ -65,6 +66,7 @@ namespace tECS
 		template <typename Component, typename... Args>
 		inline void emplace_or_modify(Entity e, Args&&... args)
 		{
+			THLIB_BENCHMARK_FUNCTION;
 			static std::type_index type_idx = std::type_index(typeid(Component));
 			initialise_component_storage_if_empty<Component>();
 			dynamic_cast<StorageTypePointer<Component>>(components_data[type_idx])->emplace_or_modify_entity(e, std::forward<Args>(args)...);
@@ -90,6 +92,7 @@ namespace tECS
 		template <typename Component>
 		inline Component* get(Entity e)
 		{
+			THLIB_BENCHMARK_FUNCTION;
 			static std::type_index type_idx = std::type_index(typeid(Component));
 			initialise_component_storage_if_empty<Component>();
 			return dynamic_cast<StorageTypePointer<Component>>(components_data[type_idx])->get_component(e);
@@ -99,6 +102,7 @@ namespace tECS
 		template <typename Component>
 		inline Component get_or(Entity e, Component&& defaultValue)
 		{
+			THLIB_BENCHMARK_FUNCTION;
 			static std::type_index type_idx = std::type_index(typeid(Component));
 			initialise_component_storage_if_empty<Component>();
 			if (has<Component>(e))
@@ -128,20 +132,20 @@ namespace tECS
 			return dynamic_cast<StorageTypePointer<Component>>(components_data[type_idx])->get_component(e);
 		}
 
-		//returns a selection of entities that have all the components of IncludeTypes
+		//returns a selection of tuples that have all the components of IncludeTypes
 		template <typename... IncludeTypes>
-		Selection<TypePack<IncludeTypes...>, TypePack<>, std::tuple<Entity, IncludeTypes&...>> where()
+		TupleSelection<TypePack<IncludeTypes...>, TypePack<>> where()
 		{
 			THLIB_BENCHMARK_FUNCTION;
-			return Selection<TypePack<IncludeTypes...>, TypePack<>, std::tuple<Entity, IncludeTypes&...>>(std::array<IComponentStorageBase*, sizeof...(IncludeTypes)>{ get_component_storage<IncludeTypes>()... }, std::array<IComponentStorageBase*, 0>{});
+			return TupleSelection<TypePack<IncludeTypes...>, TypePack<>>{ std::array<IComponentStorageBase*, sizeof...(IncludeTypes)>{ get_component_storage<IncludeTypes>()... }, std::array<IComponentStorageBase*, 0>{} };
 		}
 
-		//returns a selection of entities that have all the components of IncludeTypes and none of the components of ExcludeTypes
+		//returns a selection of tuples that have all the components of IncludeTypes and none of the components of ExcludeTypes
 		template <typename... IncludeTypes, typename... ExcludeTypes>
-		Selection<TypePack<IncludeTypes...>, TypePack<ExcludeTypes...>, std::tuple<Entity, IncludeTypes&...>> where(Exclude<ExcludeTypes...>)
+		TupleSelection<TypePack<IncludeTypes...>, TypePack<ExcludeTypes...>> where(Exclude<ExcludeTypes...>)
 		{
 			THLIB_BENCHMARK_FUNCTION;
-			return Selection<TypePack<IncludeTypes...>, TypePack<ExcludeTypes...>, std::tuple<Entity, IncludeTypes&...>>(std::array<IComponentStorageBase*, sizeof...(IncludeTypes)>{ get_component_storage<IncludeTypes>()... }, std::array<IComponentStorageBase*, sizeof...(ExcludeTypes)>{ get_component_storage<ExcludeTypes>()... });
+			return TupleSelection<TypePack<IncludeTypes...>, TypePack<ExcludeTypes...>>{ std::array<IComponentStorageBase*, sizeof...(IncludeTypes)>{ get_component_storage<IncludeTypes>()... }, std::array<IComponentStorageBase*, sizeof...(ExcludeTypes)>{ get_component_storage<ExcludeTypes>()... } };
 		}
 
 	private:

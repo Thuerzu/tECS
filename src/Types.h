@@ -6,8 +6,7 @@
 #include <tuple>
 #include <utility>
 
-namespace tECS
-{
+namespace tECS {
 	struct IComponentStorageBase;
 
 	using Entity = uint64_t;			//This is used as an ID; 0 is empty, starts at 1
@@ -70,8 +69,6 @@ namespace tECS
 		}
 	};
 
-	using a = Sequence<1, 2, 3>::Concat<4, 5, 6>;
-
 	template <int64_t... I>
 	struct Range;
 
@@ -104,8 +101,6 @@ namespace tECS
 	struct Range<B, E, S, 0, I...> {
 		using Seq = Sequence<B, I...>;
 	};
-
-	using b = Range<7>::Seq;
 
 	template <typename T>
 	struct FunctionTraits : FunctionTraits<decltype(&T::operator())> {};
