@@ -52,8 +52,8 @@ void test() {
 
     {
         THLIB_BENCHMARK_SCOPE("RANGE BASED FOR LOOP OVER <Position>");
-        for (auto[e, pos] : ecs.where<PositionComponent>()) {
-            pos.x -= e; pos.y -= e; pos.z -= e;
+        for (auto[_, pos] : ecs.where<PositionComponent>()) {
+            pos.x -= 4; pos.y -= 4; pos.z -= 4;
         }
     }
 
@@ -83,9 +83,6 @@ int main() {
 
     std::cout << ecs.has_any<PositionComponent, VelocityComponent, HealthComponent>(entt2) << "\n";
 
-    PositionComponent* pos = ecs.get<PositionComponent>(entt);
-	HealthComponent* health = ecs.get<HealthComponent>(entt);
-    
     auto filterMovement = ecs.where<VelocityComponent, PositionComponent>();
 
     double dt = 2.5;

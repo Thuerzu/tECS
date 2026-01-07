@@ -93,7 +93,7 @@ namespace tECS {
 				return comp_storage->get_type_index() == std::type_index(typeid(T));
 			});
 			if (it == this->include.end())
-				throw std::runtime_error("Entity does not have a component of the requested type!");
+				throw std::runtime_error("Requested component type was not found!");
 			return *dynamic_cast<ComponentStorage<std::remove_reference_t<T>>*>(*it)->get_component(e);
 		}	
 	};
